@@ -1,4 +1,5 @@
 PODS:
+  - Alamofire (4.8.1)
   - CodableFirebase (0.2.1)
   - Firebase/Core (5.16.0):
     - Firebase/CoreOnly
@@ -58,14 +59,18 @@ PODS:
     - nanopb/encode (= 0.3.901)
   - nanopb/decode (0.3.901)
   - nanopb/encode (0.3.901)
+  - SwiftyJSON (4.2.0)
 
 DEPENDENCIES:
+  - Alamofire
   - CodableFirebase
   - Firebase/Core
   - Firebase/Database
+  - SwiftyJSON
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
+    - Alamofire
     - CodableFirebase
     - Firebase
     - FirebaseAnalytics
@@ -77,8 +82,10 @@ SPEC REPOS:
     - GoogleUtilities
     - leveldb-library
     - nanopb
+    - SwiftyJSON
 
 SPEC CHECKSUMS:
+  Alamofire: 16ce2c353fb72865124ddae8a57c5942388f4f11
   CodableFirebase: 0bf201991eeec35eb9fcd987d271ea463cf34a80
   Firebase: 749a8ff4962f9d8c79dda1966de20f6f77583d67
   FirebaseAnalytics: d35d47c03c50c73c14a7fd31463c5775843e78a9
@@ -90,7 +97,8 @@ SPEC CHECKSUMS:
   GoogleUtilities: 111a012f4c3a29c9e7c954c082fafd6ee3c999c0
   leveldb-library: 08cba283675b7ed2d99629a4bc5fd052cd2bb6a5
   nanopb: 2901f78ea1b7b4015c860c2fdd1ea2fee1a18d48
+  SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
 
-PODFILE CHECKSUM: c296b44a368a5167213b71d8842c87079e766a23
+PODFILE CHECKSUM: 7cbc4e3bccf43a3f88621518e70204fe8972ab02
 
 COCOAPODS: 1.5.2

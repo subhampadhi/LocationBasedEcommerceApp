@@ -13,6 +13,8 @@ import MapKit
 import FirebaseDatabase
 import Firebase
 import CodableFirebase
+import Alamofire
+import SwiftyJSON
 
 typealias JSONDictionary = [String:Any]
 
@@ -119,53 +121,72 @@ class HomeVC: UIViewController , CLLocationManagerDelegate , UITableViewDelegate
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         findCurrentLocation()
+       
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super .viewDidAppear(true)
-        getInfo()
-        
-    }
+        }
     
-    func getInfo() {
+    func parseJSON() {
+        DispatchQueue.main.async {
         var isStoreAvailableInLocation = false
-        ref = Database.database().reference()
-        ref?.child("locations").observeSingleEvent(of: .value, with: { snapshot in
-            guard let value = snapshot.value else { return }
-            do {
-                let model = try FirebaseDecoder().decode([Location].self, from: value)
-                self.location = model
-                
-                for i in 0..<(self.location?.count)!{
-                   print((self.currentState)!)
-                   if ((self.location?[i].state)! == (self.currentState)!){
-                    self.currentCity  = self.location?[i].name
-                    self.indexOfCurrentCity = i
-                    isStoreAvailableInLocation = true
-                    if !UserDefaults.standard.bool(forKey: "isLocationSet") {
-                        self.showAlert(title: "Yay!", message: "We have found a store nearby in \((self.currentCity)!)", presenter: self)
-                        UserDefaults.standard.set(true, forKey: "isLocationSet")
+        
+        let url = URL(string: "http://ec2-35-154-201-59.ap-south-1.compute.amazonaws.com:5000/getlocations")!
+            
+        Alamofire.request(url).validate().responseJSON(completionHandler: { (response) in
+            switch response.result{
+            case .success(let value):
+                let json = JSON(value)
+                let newJson = json["result"][0]["locations"]
+                let encodedData = try? JSONEncoder().encode(newJson)
+                if let encodedObjectJsonString = String(data: encodedData!, encoding: .utf8)
+                {
+                  //  print(encodedObjectJsonString)
+                    if let model = try? JSONDecoder().decode([Location].self, from: encodedData!) {
+                      self.location = model
+                        for i in 0..<(self.location?.count)!{
+                            print((self.currentState)!)
+                            if ((self.location?[i].state)! == (self.currentState)!){
+                                self.currentCity  = self.location?[i].name
+                                self.indexOfCurrentCity = i
+                                isStoreAvailableInLocation = true
+                                if !UserDefaults.standard.bool(forKey: "isLocationSet") {
+                                    self.showAlert(title: "Yay!", message: "We have found a store nearby in \((self.currentCity)!)", presenter: self)
+                                    self.dismiss(animated: true){
+                                        self.setCurrentLocation(location: (self.currentCity)!)
+                                    }
+                                    UserDefaults.standard.set(true, forKey: "isLocationSet")
+                                }
+                            }
+                        }
+                        if !isStoreAvailableInLocation {
+                            if !UserDefaults.standard.bool(forKey: "isLocationSet"){
+                                let actionSheet = UIAlertController(title: "Oops", message: "Looks like there is no store nearby , Please chose one from the list", preferredStyle: .actionSheet)
+                                for i in 0..<(self.location?.count)!{
+                                    actionSheet.addAction(UIAlertAction(title: "\((self.location?[i].name)!)", style: .default, handler: { (action: UIAlertAction) in
+                                        self.setCurrentLocation(location: "\((self.location?[i].name)!)")
+                                    }))
+                                }
+                                actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                                self.present(actionSheet, animated: true, completion: nil)
+                            }
+                        }
+                    
+                    } else {
+                        print("JSON failed")
                     }
-                   }
                 }
                 
-                if !isStoreAvailableInLocation {
-                    if !UserDefaults.standard.bool(forKey: "isLocationSet"){
-                    let actionSheet = UIAlertController(title: "Oops", message: "Looks like there is no store nearby , Please chose one from the list", preferredStyle: .actionSheet)
-                    for i in 0..<(self.location?.count)!{
-                        actionSheet.addAction(UIAlertAction(title: "\((self.location?[i].name)!)", style: .default, handler: { (action: UIAlertAction) in
-                            self.setCurrentLocation(location: "\((self.location?[i].name)!)")
-                        }))
-                    }
-                    actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-                    self.present(actionSheet, animated: true, completion: nil)
-                    }
-                }
-            } catch let error {
-                print(error)
+            case .failure(let error):
+                self.showAlert(title: "OOPS", message: error.localizedDescription, presenter: self)
+                print(error.localizedDescription)
             }
         })
+        }
     }
+    
+
     
     func setCurrentLocation (location:String){
         self.currentCity = location
@@ -175,18 +196,15 @@ class HomeVC: UIViewController , CLLocationManagerDelegate , UITableViewDelegate
         showCategories()
     }
     
+    func showValues() {
+        
+    }
+    
     func showCategories() {
-        ref = Database.database().reference()
-        ref?.child("locations").observeSingleEvent(of: .value, with: { snapshot in
-            guard let value = snapshot.value else { return }
-            do {
-                let model = try FirebaseDecoder().decode([Location].self, from: value)
-                self.location = model
                 for i in 0..<(self.location?.count)! {
                     if (self.location?[i].name)! == (self.currentCity!){
                         self.indexOfCurrentCity = i
                          print(self.indexOfCurrentCity!)
-                        print("yo")
                     }
                 }
                 print((self.location?[self.indexOfCurrentCity!].stores?[0].categories.count)!)
@@ -195,12 +213,6 @@ class HomeVC: UIViewController , CLLocationManagerDelegate , UITableViewDelegate
                     self.tableView.reloadData()
                 }
                 self.isReady = true
-                
-            } catch let error {
-                print(error)
-            }
-        })
-        
     }
     
     func findCurrentLocation() {
@@ -252,6 +264,7 @@ class HomeVC: UIViewController , CLLocationManagerDelegate , UITableViewDelegate
             {
                 print(locationName)
                 self.currentState = locationName as String
+                
             }
             
             if let street = placeMark.thoroughfare as NSString?
@@ -273,8 +286,55 @@ class HomeVC: UIViewController , CLLocationManagerDelegate , UITableViewDelegate
             {
                 print(country)
             }
+            self.parseJSON()
         }
+        
+        
     }
+    
+    //    func getInfo() {
+    //        var isStoreAvailableInLocation = false
+    //        ref = Database.database().reference()
+    //        ref?.child("locations").observeSingleEvent(of: .value, with: { snapshot in
+    //            guard let value = snapshot.value else { return }
+    //            do {
+    //                let model = try FirebaseDecoder().decode([Location].self, from: value)
+    //
+    //                self.location = model
+    //
+    //                for i in 0..<(self.location?.count)!{
+    //                   print((self.currentState)!)
+    //                   if ((self.location?[i].state)! == (self.currentState)!){
+    //                    self.currentCity  = self.location?[i].name
+    //                    self.indexOfCurrentCity = i
+    //                    isStoreAvailableInLocation = true
+    //                    if !UserDefaults.standard.bool(forKey: "isLocationSet") {
+    //                        self.showAlert(title: "Yay!", message: "We have found a store nearby in \((self.currentCity)!)", presenter: self)
+    //                        self.dismiss(animated: true){
+    //                            self.setCurrentLocation(location: (self.currentCity)!)
+    //                        }
+    //                        UserDefaults.standard.set(true, forKey: "isLocationSet")
+    //                    }
+    //                   }
+    //                }
+    //
+    //                if !isStoreAvailableInLocation {
+    //                    if !UserDefaults.standard.bool(forKey: "isLocationSet"){
+    //                    let actionSheet = UIAlertController(title: "Oops", message: "Looks like there is no store nearby , Please chose one from the list", preferredStyle: .actionSheet)
+    //                    for i in 0..<(self.location?.count)!{
+    //                        actionSheet.addAction(UIAlertAction(title: "\((self.location?[i].name)!)", style: .default, handler: { (action: UIAlertAction) in
+    //                            self.setCurrentLocation(location: "\((self.location?[i].name)!)")
+    //                        }))
+    //                    }
+    //                    actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+    //                    self.present(actionSheet, animated: true, completion: nil)
+    //                    }
+    //                }
+    //            } catch let error {
+    //                print(error)
+    //            }
+    //        })
+    //    }
     
 }
 

@@ -13,6 +13,9 @@ target 'LocationBasedEcommerceApp' do
   pod 'Firebase/Core'
   pod 'Firebase/Database'
   pod 'CodableFirebase'
+  pod 'Alamofire'
+  pod 'SwiftyJSON'
+
 
   target 'LocationBasedEcommerceAppTests' do
     inherit! :search_paths

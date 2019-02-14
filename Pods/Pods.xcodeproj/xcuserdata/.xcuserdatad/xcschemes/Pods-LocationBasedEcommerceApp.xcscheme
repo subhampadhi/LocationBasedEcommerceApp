@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F3C6A3CF43F6CFD91447E54896F2A28C"
+               BlueprintIdentifier = "A932DC384AFE7EFC6EF6C0C717864A93"
                BlueprintName = "Pods-LocationBasedEcommerceApp"
                ReferencedContainer = "container:Pods.xcodeproj"
                BuildableName = "Pods-LocationBasedEcommerceApp.framework">

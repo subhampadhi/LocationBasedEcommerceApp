@@ -8,6 +8,20 @@
 
 import Foundation
 
+struct Result:  Codable {
+    var result : [AllData]?
+    var status : String?
+}
+
+struct AllData: Codable {
+    var locations : [Location]?
+    var id : Oid
+}
+
+struct Oid: Codable {
+    var oid : String?
+}
+
 struct Location: Codable {
     
     var state: String?
